@@ -5,11 +5,13 @@ import torch.nn.functional as F
 from utils.misc_util import norm_col_init, weights_init
 import torchvision
 
+
 class ModelInput:
     """ Input to the model. """
     def __init__(self, state=None, hidden=None):
         self.state = state
         self.hidden = hidden
+
 
 class ModelOutput:
     """ Output of the model. """
@@ -22,6 +24,7 @@ class ModelOutput:
         self.value = value
         self.policy = policy
         self.hidden = hidden
+
 
 class Model(torch.nn.Module):
     def __init__(self, args):

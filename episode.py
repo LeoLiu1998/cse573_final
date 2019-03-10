@@ -53,7 +53,7 @@ class Episode:
 
     def slow_replay(self, delay=0.2):
         # Reset the episode
-        self._env.reset(self.cur_scene, change_seed = False)
+        self._env.reset(self.cur_scene, change_seed=False)
         
         for action in self.actions_taken:
             self.action_step(action)
@@ -61,6 +61,7 @@ class Episode:
     
     def judge(self, action):
         """ Judge the last event. """
+        # TODO: change for two objects
         # immediate reward
         reward = STEP_PENALTY 
         done = False
@@ -95,7 +96,7 @@ class Episode:
             self._env.reset(scene)
 
         # For now, single target.
-        self.target = 'Tomato'
+        self.target = ['Tomato', "Bowl"]
         self.success = False
         self.cur_scene = scene
         self.actions_taken = []
