@@ -32,7 +32,7 @@ class Episode:
         self.objects = int_objects + rec_objects
         self.actions_list = [{'action': a} for a in BASIC_ACTIONS]
         self.actions_taken = []
-        self.done = [0, 0]  # store agents' judgements
+        self.done_each_obj = [0, 0]  # store agents' judgements
         self.successes = [0, 0]
         self.seen_objects = [0 for _ in range(len(self.objects))]
         self.success = False
@@ -73,8 +73,8 @@ class Episode:
         action_was_successful = self.environment.last_action_success
         if action['action'] in ['DoneTomato', 'DoneBowl']:
             done_id = ['DoneTomato', 'DoneBowl'].index(action['action'])
-            if self.done[done_id] != 1:
-                self.done[done_id] = 1
+            if self.done_each_obj[done_id] != 1:
+                self.done_each_obj[done_id] = 1
 
                 objects = self._env.last_event.metadata['objects']
                 visible_objects = [o['objectType'] for o in objects if o['visible']]
@@ -83,9 +83,7 @@ class Episode:
                     self.successes[done_id] = 1
                     self.success = all(self.successes)
 
-        all_done = sum(self.done) == 2
-        # if all_done:
-        #     reward += GOAL_SUCCESS_REWARD
+        all_done = sum(self.done_each_obj) == 2
 
         return reward, all_done, action_was_successful
 
@@ -110,6 +108,7 @@ class Episode:
         # For now, single target.
         self.target = ['Tomato', "Bowl"]
         self.success = False
+        self.done_each_obj = [0, 0]
         self.cur_scene = scene
         self.actions_taken = []
         
