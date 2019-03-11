@@ -21,7 +21,7 @@ class A3CAgent:
         self.log_probs = []
         self.rewards = []
         self.entropies = []
-        self.done = True
+        self.done = [True, True]
         self.info = None
         self.reward = 0
         self.hidden = None
@@ -127,7 +127,6 @@ class A3CAgent:
 
         return model_output.value, prob, action
 
-    
     def reset_hiddenf(self):
         if self.gpu_id >= 0:
             with torch.cuda.device(self.gpu_id):

@@ -1,12 +1,13 @@
 from __future__ import division
 
 import time
-import setproctitles
+import setproctitle
 import random
 import os
 
 import torch
 from torch.autograd import Variable
+
 
 def train(rank, args, create_shared_model, shared_model, 
           initialize_agent, optimizer, res_queue, end_flag):
@@ -75,6 +76,7 @@ def train(rank, args, create_shared_model, shared_model,
         
     player.exit()
 
+
 def test(rank, args, create_shared_model, shared_model, 
           initialize_agent, res_queue, end_flag):
     """ Training loop for each agent. """
@@ -93,7 +95,7 @@ def test(rank, args, create_shared_model, shared_model,
 
     torch.manual_seed(args.seed + rank)
     if gpu_id >= 0:
-        torch.cuda.manual_seed(args.seed + rank)python3 -m pynlp
+        torch.cuda.manual_seed(args.seed + rank)
 
     player = initialize_agent(create_shared_model, args, rank, gpu_id=gpu_id)
 
@@ -114,13 +116,11 @@ def test(rank, args, create_shared_model, shared_model,
                 if player.done:
                     break
 
-
             # Clear actions and repackage hidden.
             if not player.done:
                 reset_player(player)
         
-        
-        # Log the data from the episode and reset the plyaer.
+        # Log the data from the episode and reset the player.
         if args.enable_logging:
             log_episode(player, res_queue, total_reward=total_reward)
             
@@ -134,6 +134,7 @@ def new_episode(args, player, scene):
     player.reset_hidden()
     player.done = False 
 
+
 def log_episode(player, res_queue, **kwargs):
     results = {
         'ep_length': player.eps_len,
@@ -143,9 +144,11 @@ def log_episode(player, res_queue, **kwargs):
     results.update(**kwargs)
     res_queue.put(results)
 
+
 def reset_player(player):
     player.clear_actions()
     player.repackage_hidden()
+
 
 def a3c_loss(args, player, gpu_id):
     """ Evaluates the model at the current state. """
@@ -182,6 +185,7 @@ def a3c_loss(args, player, gpu_id):
             Variable(gae) - args.beta * player.entropies[i]
 
     return policy_loss, value_loss
+
 
 def transfer_gradient_from_player_to_shared(player, shared_model, gpu_id):
     """ Transfer the gradient from the player's model to the shared model

@@ -6,6 +6,7 @@ import sys
 from constants import GOAL_SUCCESS_REWARD, STEP_PENALTY, BASIC_ACTIONS
 from environment import Environment
 from utils.net_util import gpuify
+import numpy as np
 
 
 class Episode:
@@ -29,9 +30,12 @@ class Episode:
             rec_objects = [s.strip() for s in f.readlines()]
         
         self.objects = int_objects + rec_objects
-
-        self.actions_list = [{'action':a} for a in BASIC_ACTIONS]
+        self.objectname2id = {i: self.objects[i] for i in range(self.objects)}
+        self.id2objectname = {value: key for key, value in self.id2objectname.items()}
+        self.actions_list = [{'action': a} for a in BASIC_ACTIONS]
         self.actions_taken = []
+        self.successes = [0, 0]
+        self.seen_objects = [0 for _ in range(len(self.objects))]
 
     @property
     def environment(self):
@@ -64,18 +68,25 @@ class Episode:
         # TODO: change for two objects
         # immediate reward
         reward = STEP_PENALTY 
-        done = False
+        # all_done = False
         action_was_successful = self.environment.last_action_success
-
-        if action['action'] == 'Done':
-            done = True
+        # sth
+        if action['action'] in ['Done1', 'Done2']:
+            done_id = ['Done1', 'Done2'].index(action['action'])
+            # self.done[done_id] = 1
             objects = self._env.last_event.metadata['objects']
+            # visible_objects = []
+            # for o in objects:
+            #     if o['visible']:
+            #         self.seen_objects[self.objectname2id[o['name']]] += 1
+            #         visible_objects.append(o['objectType'])
             visible_objects = [o['objectType'] for o in objects if o['visible']]
-            if self.target in visible_objects:
+            if any(target in visible_objects for target in self.target):
                 reward += GOAL_SUCCESS_REWARD
-                self.success = True
+            self.successes[done_id] = 1
 
-        return reward, done, action_was_successful
+        all_done = sum(self.successes) == 2
+        return reward, all_done, action_was_successful
 
     def new_episode(self, args, scene):
         
