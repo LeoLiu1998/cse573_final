@@ -128,7 +128,7 @@ class A3CAgent:
 
         return model_output.value, prob, action
 
-    def reset_hiddenf(self):
+    def reset_hidden(self):
         if self.gpu_id >= 0:
             with torch.cuda.device(self.gpu_id):
                 self.hidden = (torch.zeros(1, self.hidden_state_sz).cuda(), torch.zeros(1, self.hidden_state_sz).cuda())
