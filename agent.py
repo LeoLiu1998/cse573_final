@@ -43,7 +43,7 @@ class A3CAgent:
         model_input = ModelInput()
         model_input.state = self.preprocess_frame(self.episode.state_for_agent())
         model_input.hidden = self.hidden
-        model_input.addtional_state_info = self._episode.done
+        model_input.additional_state_info = gpuify(torch.Tensor(self._episode.done).unsqueeze(0), gpu_id=self.gpu_id)
         model_output = self.model.forward(model_input)
         return model_output
 
@@ -128,7 +128,7 @@ class A3CAgent:
 
         return model_output.value, prob, action
 
-    def reset_hiddenf(self):
+    def reset_hidden(self):
         if self.gpu_id >= 0:
             with torch.cuda.device(self.gpu_id):
                 self.hidden = (torch.zeros(1, self.hidden_state_sz).cuda(), torch.zeros(1, self.hidden_state_sz).cuda())
