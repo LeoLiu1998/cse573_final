@@ -84,8 +84,8 @@ class Episode:
                     self.success = all(self.successes)
 
         all_done = sum(self.done) == 2
-        if all_done:
-            reward += GOAL_SUCCESS_REWARD
+        # if all_done:
+        #     reward += GOAL_SUCCESS_REWARD
 
         return reward, all_done, action_was_successful
 
