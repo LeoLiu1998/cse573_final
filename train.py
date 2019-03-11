@@ -93,7 +93,7 @@ def test(rank, args, create_shared_model, shared_model,
 
     torch.manual_seed(args.seed + rank)
     if gpu_id >= 0:
-        torch.cuda.manual_seed(args.seed + rank)python3 -m pynlp
+        torch.cuda.manual_seed(args.seed + rank)
 
     player = initialize_agent(create_shared_model, args, rank, gpu_id=gpu_id)
 
