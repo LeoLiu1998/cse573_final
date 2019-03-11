@@ -30,8 +30,6 @@ class Episode:
             rec_objects = [s.strip() for s in f.readlines()]
         
         self.objects = int_objects + rec_objects
-        self.objectname2id = {i: self.objects[i] for i in range(self.objects)}
-        self.id2objectname = {value: key for key, value in self.id2objectname.items()}
         self.actions_list = [{'action': a} for a in BASIC_ACTIONS]
         self.actions_taken = []
         self.done = [0, 0]  # store agents' judgements

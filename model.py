@@ -8,9 +8,9 @@ import torchvision
 
 class ModelInput:
     """ Input to the model. """
-    def __init__(self, state=None, hidden=None, addtional_state_info=None):
+    def __init__(self, state=None, hidden=None, additional_state_info=None):
         self.state = state
-        self.addtional_state_info = addtional_state_info
+        self.additional_state_info = additional_state_info
         self.hidden = hidden
 
 
@@ -60,6 +60,15 @@ class Model(torch.nn.Module):
         self.augmented_hidden_size = args.augmented_hidden_size
         self.augmented_linear = nn.Linear(2, self.augmented_hidden_size)
         self.augmented_combination = nn.Linear(1024 + self.augmented_hidden_size, 1024)
+
+        self.augmented_linear.weight.data = norm_col_init(
+            self.augmented_linear.weight.data, 1.0)
+        self.augmented_linear.bias.data.fill_(0)
+
+        self.augmented_combination.weight.data = norm_col_init(
+            self.augmented_combination.weight.data, 1.0)
+        self.augmented_combination.bias.data.fill_(0)
+
         self.lstm.bias_ih.data.fill_(0)
         self.lstm.bias_hh.data.fill_(0)
 
@@ -73,13 +82,17 @@ class Model(torch.nn.Module):
 
         x = x.view(x.size(0), -1)
         additional_score = self.augmented_linear(additional_state_info)
-        x = self.augmented_combination(torch.cat((x, additional_score)))
+        # print("additional_score_size: {}".format(additional_score.shape))
+        # print("x: {}".format(x.shape))
+        x_concat = torch.cat([x, additional_score], dim=1)
+        # print("x_concat: {}".format(x_concat.shape))
+        x = self.augmented_combination(x_concat)
 
         return x
 
     def a3clstm(self, x, hidden):
         hx, cx = self.lstm(x, hidden)
-        # x = self.fc(x)  # reduce dimension
+        x = hx
         critic_out = self.critic_linear(x)
         actor_out = self.actor_linear(x)
         return actor_out, critic_out, (hx, cx)
