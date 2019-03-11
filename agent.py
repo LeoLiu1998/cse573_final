@@ -43,6 +43,7 @@ class A3CAgent:
         model_input = ModelInput()
         model_input.state = self.preprocess_frame(self.episode.state_for_agent())
         model_input.hidden = self.hidden
+        model_input.addtional_state_info = self._episode.done
         model_output = self.model.forward(model_input)
         return model_output
 

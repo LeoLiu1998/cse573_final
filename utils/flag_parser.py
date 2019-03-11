@@ -44,6 +44,11 @@ def parse_arguments():
         metavar='W',
         help='how many training processes to use (default: 32)')
     parser.add_argument(
+        '--augmented-hidden-size',
+        type=int,
+        default=32,
+        help='hidden size for additional info (default: 32)')
+    parser.add_argument(
         '--num-steps',
         type=int,
         default=30,

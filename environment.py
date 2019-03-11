@@ -48,7 +48,6 @@ class Environment:
     def last_action_success(self):
         return self.controller.last_event.metadata['lastActionSuccess']
 
-
     def object_is_visible(self, objId):
         objects = self.last_event.metadata['objects']
         visible_objects = [o['objectId'] for o in objects if o['visible']]
