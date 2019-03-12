@@ -34,7 +34,7 @@ class Episode:
         self.actions_taken = []
         self.done_each_obj = [0, 0]  # store agents' judgements
         self.successes = [0, 0]
-        self.seen_objects = [0 for _ in range(len(self.objects))]
+        # self.seen_objects = [0 for _ in range(len(self.objects))]
         self.success = False
 
     @property
@@ -109,6 +109,7 @@ class Episode:
         self.target = ['Tomato', "Bowl"]
         self.success = False
         self.done_each_obj = [0, 0]
+        self.successes = [0, 0]
         self.cur_scene = scene
         self.actions_taken = []
         
