@@ -188,6 +188,11 @@ def parse_arguments():
         default=False,
         help='Randomize object locations at start of episode.')
     parser.add_argument(
+        '--bonus',
+        action='store_true',
+        default=False,
+        help='add bonus reward if all targets were found.')
+    parser.add_argument(
         '--arch',
         type=str,
         choices=['osx', 'linux'],

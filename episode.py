@@ -3,7 +3,7 @@ import random
 import torch
 import time
 import sys
-from constants import GOAL_SUCCESS_REWARD, SUCCESS_REWARD, STEP_PENALTY, BASIC_ACTIONS
+from constants import GOAL_SUCCESS_REWARD, SUCCESS_REWARD, STEP_PENALTY, BASIC_ACTIONS, DONE_TOMATO, DONE_BOWL
 from environment import Environment
 from utils.net_util import gpuify
 import numpy as np
@@ -71,8 +71,9 @@ class Episode:
         # all_done = False
 
         action_was_successful = self.environment.last_action_success
-        if action['action'] in ['DoneTomato', 'DoneBowl']:
-            done_id = ['DoneTomato', 'DoneBowl'].index(action['action'])
+        if action['action'] in [DONE_TOMATO, DONE_BOWL]:
+
+            done_id = [DONE_TOMATO, DONE_BOWL].index(action['action'])
             if self.done_each_obj[done_id] != 1:
                 self.done_each_obj[done_id] = 1
 
@@ -82,6 +83,8 @@ class Episode:
                     reward += SUCCESS_REWARD
                     self.successes[done_id] = 1
                     self.success = all(self.successes)
+                if self.success:
+                    reward += GOAL_SUCCESS_REWARD
 
         all_done = sum(self.done_each_obj) == 2
 
@@ -105,12 +108,12 @@ class Episode:
         else:
             self._env.reset(scene)
 
-        # For now, single target.
+        # For now, single target.BowlTomato
         self.target = ['Tomato', "Bowl"]
         self.success = False
         self.done_each_obj = [0, 0]
         self.successes = [0, 0]
-        self.cur_scene = scene
+        self.cur_scenecur_scene = scene
         self.actions_taken = []
         
         return True
