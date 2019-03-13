@@ -108,8 +108,8 @@ class Episode:
                     reward += SUCCESS_REWARD
                     self.successes[done_id] = 1
                     self.success = all(self.successes)
-                if self.success:
-                    reward += GOAL_SUCCESS_REWARD
+                # if self.success:
+                #     reward += GOAL_SUCCESS_REWARD
 
         all_done = sum(self.done_each_obj) == 2
 
