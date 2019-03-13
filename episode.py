@@ -84,10 +84,13 @@ class Episode:
         for i in range(len(self.distances)):
             target = self.target[i]
             if target in visible_objects:
-                pos = objects[target]['position']
+                object_meta = [o for o in objects if o['objectType'] == target]
+                assert len(object_meta) == 1
+                object_meta = object_meta[0]
+                pos = object_meta['position']
                 distance2agent = self.cal_distance(pos, agent_pos)
                 if distance2agent < self.distances[i] and self.done_each_obj[i] != 1:
-                    # if we are getting closer to the object and
+                    # if we are getting closer to the object \and
                     # the object is not "done"(consider by the agent) yet.
                     reward = 0
                     self.distances[i] = distance2agent
