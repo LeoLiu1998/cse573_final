@@ -38,6 +38,7 @@ class Episode:
         # self.seen_objects = [0 for _ in range(len(self.objects))]
         self.success = False
         self.distances = [float('inf'), float('inf')]
+        self.args = args
 
     @property
     def environment(self):
@@ -76,42 +77,56 @@ class Episode:
         # TODO: change for two objects
         # immediate reward
         reward = STEP_PENALTY 
-        # all_done = False
-        # objects = self._env.last_event.metadata['objects']
-        # agent_pos = self._env.last_event.metadata['agent']['position']
-        #
-        # visible_objects = [o['objectType'] for o in objects if o['visible']]
-        # for i in range(len(self.distances)):
-        #     target = self.target[i]
-        #     if target in visible_objects:
-        #         object_meta = [o for o in objects if o['objectType'] == target]
-        #         assert len(object_meta) == 1
-        #         object_meta = object_meta[0]
-        #         pos = object_meta['position']
-        #         distance2agent = self.cal_distance(pos, agent_pos)
-        #         if distance2agent < self.distances[i] and self.done_each_obj[i] != 1:
-        #             # if we are getting closer to the object \and
-        #             # the object is not "done"(consider by the agent) yet.
-        #             reward = 0
-        #             self.distances[i] = distance2agent
-
+        all_done = False
         action_was_successful = self.environment.last_action_success
+        if self.args.improve:
+            objects = self._env.last_event.metadata['objects']
+            agent_pos = self._env.last_event.metadata['agent']['position']
+
+            visible_objects = [o['objectType'] for o in objects if o['visible']]
+            for i in range(len(self.distances)):
+                target = self.target[i]
+                if target in visible_objects:
+                    object_meta = [o for o in objects if o['objectType'] == target]
+                    assert len(object_meta) == 1
+                    object_meta = object_meta[0]
+                    pos = object_meta['position']
+                    distance2agent = self.cal_distance(pos, agent_pos)
+                    if distance2agent < self.distances[i] and self.done_each_obj[i] != 1:
+                        # if we are getting closer to the object \and
+                        # the object is not "done"(consider by the agent) yet.
+                        reward = 0
+                        self.distances[i] = distance2agent
+
         if action['action'] in [DONE_TOMATO, DONE_BOWL]:
 
             done_id = [DONE_TOMATO, DONE_BOWL].index(action['action'])
+            if not self.args.many_dones:
+                if self.done_each_obj[done_id] != 1:
+                    self.done_each_obj[done_id] = 1
 
-            # if self.done_each_obj[done_id] != 1:
-            if self.successes[done_id] != 1:
-                self.done_each_obj[done_id] = 1
+                    objects = self._env.last_event.metadata['objects']
+                    visible_objects = [o['objectType'] for o in objects if o['visible']]
+                    if self.target[done_id] in visible_objects:
+                        reward += SUCCESS_REWARD
+                        self.successes[done_id] = 1
+                        self.success = all(self.successes)
+                    if self.args.bonus:
+                        if self.success:
+                            reward += GOAL_SUCCESS_REWARD
+            else:
+                if self.successes[done_id] != 1:
 
-                objects = self._env.last_event.metadata['objects']
-                visible_objects = [o['objectType'] for o in objects if o['visible']]
-                if self.target[done_id] in visible_objects:
-                    reward += SUCCESS_REWARD
-                    self.successes[done_id] = 1
-                    self.success = all(self.successes)
-                if self.success:
-                    reward += GOAL_SUCCESS_REWARD
+                    objects = self._env.last_event.metadata['objects']
+                    visible_objects = [o['objectType'] for o in objects if o['visible']]
+                    if self.target[done_id] in visible_objects:
+                        reward += SUCCESS_REWARD
+                        self.successes[done_id] = 1
+                        self.success = all(self.successes)
+                    if self.args.bonus:
+                        if self.success:
+                            reward += GOAL_SUCCESS_REWARD
+
 
         # all_done = sum(self.done_each_obj) == 2
         all_done = self.success
