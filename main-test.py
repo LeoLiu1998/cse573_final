@@ -76,7 +76,7 @@ def main():
         return
     print("Testing...")
     # Turn on random initialization for testing
-    args.randomize_objects = True
+    args.randomize_objects = False
     end_flag.value = False
     test_res_queue = mp.Queue()
     for rank in range(0, args.workers):
