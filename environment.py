@@ -48,7 +48,6 @@ class Environment:
     def last_action_success(self):
         return self.controller.last_event.metadata['lastActionSuccess']
 
-
     def object_is_visible(self, objId):
         objects = self.last_event.metadata['objects']
         visible_objects = [o['objectId'] for o in objects if o['visible']]
@@ -114,7 +113,7 @@ class Environment:
                     # Go back to previous state.
                     self.teleport_agent_to(curr_state.x, curr_state.y, curr_state.z, curr_state.rotation, curr_state.horizon)
                     self.last_event.metadata['lastActionSuccess'] = False
-        elif action_dict['action'] != 'Done':
+        elif not action_dict['action'].startswith('Done'):
             return self.controller.step(action_dict)
 
     def teleport_agent_to(self, x, y, z, rotation, horizon):

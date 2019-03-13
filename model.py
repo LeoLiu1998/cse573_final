@@ -5,11 +5,14 @@ import torch.nn.functional as F
 from utils.misc_util import norm_col_init, weights_init
 import torchvision
 
+
 class ModelInput:
     """ Input to the model. """
-    def __init__(self, state=None, hidden=None):
+    def __init__(self, state=None, hidden=None, additional_state_info=None):
         self.state = state
+        self.additional_state_info = additional_state_info
         self.hidden = hidden
+
 
 class ModelOutput:
     """ Output of the model. """
@@ -23,6 +26,7 @@ class ModelOutput:
         self.policy = policy
         self.hidden = hidden
 
+
 class Model(torch.nn.Module):
     def __init__(self, args):
         super(Model, self).__init__()
@@ -35,8 +39,8 @@ class Model(torch.nn.Module):
         self.conv4 = nn.Conv2d(64, 64, 3, stride=1, padding=1)
         self.maxp4 = nn.MaxPool2d(2, 2)
 
-        # self.lstm = nn.LSTMCell(1024, args.hidden_state_sz)
-        self.fc = nn.Linear(1024, args.hidden_state_sz)
+        self.lstm = nn.LSTMCell(1024, args.hidden_state_sz)
+        # self.fc = nn.Linear(1024, args.hidden_state_sz)
         self.critic_linear = nn.Linear(args.hidden_state_sz, 1)
         self.actor_linear = nn.Linear(args.hidden_state_sz, args.action_space)
 
@@ -53,31 +57,51 @@ class Model(torch.nn.Module):
             self.critic_linear.weight.data, 1.0)
         self.critic_linear.bias.data.fill_(0)
 
-        # self.lstm.bias_ih.data.fill_(0)
-        # self.lstm.bias_hh.data.fill_(0)
+        self.augmented_hidden_size = args.augmented_hidden_size
+        self.augmented_linear = nn.Linear(2, self.augmented_hidden_size)
+        self.augmented_combination = nn.Linear(1024 + self.augmented_hidden_size, 1024)
+
+        self.augmented_linear.weight.data = norm_col_init(
+            self.augmented_linear.weight.data, 1.0)
+        self.augmented_linear.bias.data.fill_(0)
+
+        self.augmented_combination.weight.data = norm_col_init(
+            self.augmented_combination.weight.data, 1.0)
+        self.augmented_combination.bias.data.fill_(0)
+
+        self.lstm.bias_ih.data.fill_(0)
+        self.lstm.bias_hh.data.fill_(0)
 
         self.train()
 
-    def embedding(self, state):
+    def embedding(self, state, additional_state_info):
         x = F.relu(self.maxp1(self.conv1(state)))
         x = F.relu(self.maxp2(self.conv2(x)))
         x = F.relu(self.maxp3(self.conv3(x)))
         x = F.relu(self.maxp4(self.conv4(x)))
 
         x = x.view(x.size(0), -1)
+        additional_score = self.augmented_linear(additional_state_info)
+        # print("additional_score_size: {}".format(additional_score.shape))
+        # print("x: {}".format(x.shape))
+        x_concat = torch.cat([x, additional_score], dim=1)
+        # print("x_concat: {}".format(x_concat.shape))
+        x = self.augmented_combination(x_concat)
+
         return x
 
     def a3clstm(self, x, hidden):
-        # hx, cx = self.lstm(x, hidden)
-        x = self.fc(x)  # reduce dimension
+        hx, cx = self.lstm(x, hidden)
+        x = hx
         critic_out = self.critic_linear(x)
         actor_out = self.actor_linear(x)
-        return actor_out, critic_out  # , (hx, cx)
+        return actor_out, critic_out, (hx, cx)
 
     def forward(self, model_input):
         state = model_input.state
         (hx, cx) = model_input.hidden
-        x = self.embedding(state)
-        actor_out, critic_out = self.a3clstm(x, (hx, cx))
+        additional_state_info = model_input.additional_state_info
+        x = self.embedding(state, additional_state_info)
+        actor_out, critic_out, (hx, cx) = self.a3clstm(x, (hx, cx))
         
         return ModelOutput(policy=actor_out, value=critic_out, hidden=(hx, cx))

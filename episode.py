@@ -3,9 +3,11 @@ import random
 import torch
 import time
 import sys
-from constants import GOAL_SUCCESS_REWARD, STEP_PENALTY, BASIC_ACTIONS
+from constants import GOAL_SUCCESS_REWARD, SUCCESS_REWARD, STEP_PENALTY, BASIC_ACTIONS, DONE_TOMATO, DONE_BOWL
 from environment import Environment
 from utils.net_util import gpuify
+import numpy as np
+from math import sqrt
 
 
 class Episode:
@@ -29,9 +31,14 @@ class Episode:
             rec_objects = [s.strip() for s in f.readlines()]
         
         self.objects = int_objects + rec_objects
-
-        self.actions_list = [{'action':a} for a in BASIC_ACTIONS]
+        self.actions_list = [{'action': a} for a in BASIC_ACTIONS]
         self.actions_taken = []
+        self.done_each_obj = [0, 0]  # store agents' judgements
+        self.successes = [0, 0]
+        # self.seen_objects = [0 for _ in range(len(self.objects))]
+        self.success = False
+        self.distances = [float('inf'), float('inf')]
+        self.args = args
 
     @property
     def environment(self):
@@ -53,28 +60,77 @@ class Episode:
 
     def slow_replay(self, delay=0.2):
         # Reset the episode
-        self._env.reset(self.cur_scene, change_seed = False)
+        self._env.reset(self.cur_scene, change_seed=False)
         
         for action in self.actions_taken:
             self.action_step(action)
             time.sleep(delay)
-    
+    @staticmethod
+    def cal_distance(pos1, pos2):
+        dx = pos1['x'] - pos2['x']
+        dy = pos1['y'] - pos2['y']
+        dz = pos1['z'] - pos2['z']
+        return sqrt(dx**2 + dy**2 + dz**2)
+
     def judge(self, action):
         """ Judge the last event. """
+        # TODO: change for two objects
         # immediate reward
         reward = STEP_PENALTY 
-        done = False
+        all_done = False
         action_was_successful = self.environment.last_action_success
-
-        if action['action'] == 'Done':
-            done = True
+        if self.args.improve:
             objects = self._env.last_event.metadata['objects']
-            visible_objects = [o['objectType'] for o in objects if o['visible']]
-            if self.target in visible_objects:
-                reward += GOAL_SUCCESS_REWARD
-                self.success = True
+            agent_pos = self._env.last_event.metadata['agent']['position']
 
-        return reward, done, action_was_successful
+            visible_objects = [o['objectType'] for o in objects if o['visible']]
+            for i in range(len(self.distances)):
+                target = self.target[i]
+                if target in visible_objects:
+                    object_meta = [o for o in objects if o['objectType'] == target]
+                    assert len(object_meta) == 1
+                    object_meta = object_meta[0]
+                    pos = object_meta['position']
+                    distance2agent = self.cal_distance(pos, agent_pos)
+                    if distance2agent < self.distances[i] and self.done_each_obj[i] != 1:
+                        # if we are getting closer to the object \and
+                        # the object is not "done"(consider by the agent) yet.
+                        reward = 0
+                        self.distances[i] = distance2agent
+
+        if action['action'] in [DONE_TOMATO, DONE_BOWL]:
+
+            done_id = [DONE_TOMATO, DONE_BOWL].index(action['action'])
+            if not self.args.many_dones:
+                if self.done_each_obj[done_id] != 1:
+                    self.done_each_obj[done_id] = 1
+
+                    objects = self._env.last_event.metadata['objects']
+                    visible_objects = [o['objectType'] for o in objects if o['visible']]
+                    if self.target[done_id] in visible_objects:
+                        reward += SUCCESS_REWARD
+                        self.successes[done_id] = 1
+                        self.success = all(self.successes)
+                    if self.args.bonus:
+                        if self.success:
+                            reward += GOAL_SUCCESS_REWARD
+            else:
+                if self.successes[done_id] != 1:
+
+                    objects = self._env.last_event.metadata['objects']
+                    visible_objects = [o['objectType'] for o in objects if o['visible']]
+                    if self.target[done_id] in visible_objects:
+                        reward += SUCCESS_REWARD
+                        self.successes[done_id] = 1
+                        self.success = all(self.successes)
+                    if self.args.bonus:
+                        if self.success:
+                            reward += GOAL_SUCCESS_REWARD
+
+
+        # all_done = sum(self.done_each_obj) == 2
+        all_done = self.success
+        return reward, all_done, action_was_successful
 
     def new_episode(self, args, scene):
         
@@ -94,10 +150,12 @@ class Episode:
         else:
             self._env.reset(scene)
 
-        # For now, single target.
-        self.target = 'Tomato'
+        # For now, single target.BowlTomato
+        self.target = ['Tomato', "Bowl"]
         self.success = False
-        self.cur_scene = scene
+        self.done_each_obj = [0, 0]
+        self.successes = [0, 0]
+        self.cur_scenecur_scene = scene
         self.actions_taken = []
         
         return True

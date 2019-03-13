@@ -34,15 +34,20 @@ def parse_arguments():
     parser.add_argument(
         '--action-space',
         type=int,
-        default=6,
+        default=7,
         metavar='AS',
-        help='# of actions (default: 5)')
+        help='# of actions (default: 7)')
     parser.add_argument(
         '--workers',
         type=int,
         default=4,
         metavar='W',
         help='how many training processes to use (default: 32)')
+    parser.add_argument(
+        '--augmented-hidden-size',
+        type=int,
+        default=32,
+        help='hidden size for additional info (default: 32)')
     parser.add_argument(
         '--num-steps',
         type=int,
@@ -96,6 +101,16 @@ def parse_arguments():
         default=-1,
         nargs='+',
         help='GPUs to use [-1 CPU only] (default: -1)')
+    parser.add_argument(
+        '--improve',
+        action='store_true',
+        default=False,
+        help='improve?')
+    parser.add_argument(
+        '--many-dones',
+        action='store_true',
+        default=False,
+        help='many-dones?')
     parser.add_argument(
         '--amsgrad',
         default=True,
@@ -182,6 +197,11 @@ def parse_arguments():
         action='store_true',
         default=False,
         help='Randomize object locations at start of episode.')
+    parser.add_argument(
+        '--bonus',
+        action='store_true',
+        default=False,
+        help='add bonus reward if all targets were found.')
     parser.add_argument(
         '--arch',
         type=str,
