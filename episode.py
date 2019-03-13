@@ -127,9 +127,10 @@ class Episode:
                         if self.success:
                             reward += GOAL_SUCCESS_REWARD
 
-
-        # all_done = sum(self.done_each_obj) == 2
-        all_done = self.success
+        if self.args.many_dones:
+            all_done = self.success
+        else:
+            all_done = all(self.done_each_obj)
         return reward, all_done, action_was_successful
 
     def new_episode(self, args, scene):
