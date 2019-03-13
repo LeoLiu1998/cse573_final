@@ -103,14 +103,14 @@ def parse_arguments():
         help='GPUs to use [-1 CPU only] (default: -1)')
     parser.add_argument(
         '--improve',
-        type=bool,
+        action='store_true',
         default=False,
-        help='improve')
+        help='improve?')
     parser.add_argument(
         '--many-dones',
-        type=bool,
+        action='store_true',
         default=False,
-        help='improve')
+        help='many-dones?')
     parser.add_argument(
         '--amsgrad',
         default=True,
