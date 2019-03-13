@@ -7,6 +7,7 @@ from constants import GOAL_SUCCESS_REWARD, SUCCESS_REWARD, STEP_PENALTY, BASIC_A
 from environment import Environment
 from utils.net_util import gpuify
 import numpy as np
+from math import sqrt
 
 
 class Episode:
@@ -36,6 +37,7 @@ class Episode:
         self.successes = [0, 0]
         # self.seen_objects = [0 for _ in range(len(self.objects))]
         self.success = False
+        self.distances = [float('inf'), float('inf')]
 
     @property
     def environment(self):
@@ -62,13 +64,31 @@ class Episode:
         for action in self.actions_taken:
             self.action_step(action)
             time.sleep(delay)
-    
+    @staticmethod
+    def cal_distance(pos1, pos2):
+        dx = pos1['x'] - pos2['x']
+        dy = pos1['y'] - pos2['y']
+        dz = pos1['z'] - pos2['z']
+        return sqrt(dx**2 + dy**2 + dz**2)
+
     def judge(self, action):
         """ Judge the last event. """
         # TODO: change for two objects
         # immediate reward
         reward = STEP_PENALTY 
         # all_done = False
+        objects = self._env.last_event.metadata['objects']
+        agent_pos = self._env.last_event.metadata['agent']['position']
+
+        visible_objects = [o['objectType'] for o in objects if o['visible']]
+        for i in range(len(self.distances)):
+            target = self.target[i]
+            if target in visible_objects:
+                pos = objects[target]['position']
+                distance2agent = self.cal_distance(pos, agent_pos)
+                if distance2agent < self.distances[i]:
+                    reward = 0
+                    self.distances[i] = distance2agent
 
         action_was_successful = self.environment.last_action_success
         if action['action'] in [DONE_TOMATO, DONE_BOWL]:
@@ -77,8 +97,8 @@ class Episode:
             if self.done_each_obj[done_id] != 1:
                 self.done_each_obj[done_id] = 1
 
-                objects = self._env.last_event.metadata['objects']
-                visible_objects = [o['objectType'] for o in objects if o['visible']]
+                # objects = self._env.last_event.metadata['objects']
+                # visible_objects = [o['objectType'] for o in objects if o['visible']]
                 if self.target[done_id] in visible_objects:
                     reward += SUCCESS_REWARD
                     self.successes[done_id] = 1
