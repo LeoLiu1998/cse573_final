@@ -99,7 +99,9 @@ class Episode:
         if action['action'] in [DONE_TOMATO, DONE_BOWL]:
 
             done_id = [DONE_TOMATO, DONE_BOWL].index(action['action'])
-            if self.done_each_obj[done_id] != 1:
+
+            # if self.done_each_obj[done_id] != 1:
+            if self.successes[done_id] != 1:
                 self.done_each_obj[done_id] = 1
 
                 # objects = self._env.last_event.metadata['objects']
@@ -111,8 +113,8 @@ class Episode:
                 # if self.success:
                 #     reward += GOAL_SUCCESS_REWARD
 
-        all_done = sum(self.done_each_obj) == 2
-
+        # all_done = sum(self.done_each_obj) == 2
+        all_done = self.success
         return reward, all_done, action_was_successful
 
     def new_episode(self, args, scene):
