@@ -86,7 +86,9 @@ class Episode:
             if target in visible_objects:
                 pos = objects[target]['position']
                 distance2agent = self.cal_distance(pos, agent_pos)
-                if distance2agent < self.distances[i]:
+                if distance2agent < self.distances[i] and self.done_each_obj[i] != 1:
+                    # if we are getting closer to the object and
+                    # the object is not "done"(consider by the agent) yet.
                     reward = 0
                     self.distances[i] = distance2agent
 
