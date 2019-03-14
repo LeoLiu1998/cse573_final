@@ -98,7 +98,7 @@ class Episode:
                         reward = 0
                         self.distances[i] = distance2agent
 
-        if action['action'] in [DONE_TOMATO, DONE_BOWL]:
+        if action['action'] in [PICKUP_OBJECT, COOK]:
 
             done_id = [DONE_TOMATO, DONE_BOWL].index(action['action'])
             if not self.args.many_dones:

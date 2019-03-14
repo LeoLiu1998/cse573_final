@@ -111,16 +111,19 @@ class Episode:
 
             if done_action_id == 0:
                 # if we 'picked' tomato
+                if self.done_each_action[done_action_id] != 0:
+                    reward += STEP_PENALTY * 2
+
                 if not action_was_successful:
                     all_done = True
-                    reward += STEP_PENALTY
+                    reward += STEP_PENALTY * 20
 
             elif done_action_id == 1:
                 # if we 'cook' tomato
-                if self.done_each_action[0] != 0:
+                if self.done_each_action[done_action_id] != 0:
                     reward += STEP_PENALTY * 2
                 elif not action_was_successful:
-                    reward += STEP_PENALTY * 200
+                    reward += STEP_PENALTY * 20
                     all_done = True
 
             if self.successes[done_action_id] != 1:
