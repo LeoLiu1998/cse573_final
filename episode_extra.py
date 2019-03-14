@@ -31,7 +31,7 @@ class Episode:
             rec_objects = [s.strip() for s in f.readlines()]
         
         self.objects = int_objects + rec_objects
-        self.actions_list = [{'action': a} for a in BASIC_ACTIONS]
+        self.actions_list = [{'action': a} for a in ADVANCED_ACTIONS]
         self.actions_taken = []
         self.done_each_action = [0, 0]  # store agents' judgements
         self.successes = [0, 0]
@@ -53,7 +53,11 @@ class Episode:
         return self.action_step(action)
 
     def action_step(self, action):
-        self.environment.step(action)
+        if action['action'] == 'PickupObject':
+            action['objec']
+            self.environment.step(action)
+        else:
+            self.environment.step(action)
         reward, terminal, action_was_successful = self.judge(action)
 
         return reward, terminal, action_was_successful
@@ -99,19 +103,17 @@ class Episode:
                         # the object is not "done"(consider by the agent) yet.
                         reward = 0
                         self.distances[i] = distance2agent
-
+        all_done = False
         if action['action'] in [PICKUP_OBJECT, COOK]:
 
             done_action_id = [PICKUP_OBJECT, COOK].index(action['action'])
-            self.done_each_action[done_action_id] += 1
+            self.done_each_action[done_action_id] = 1
 
             if done_action_id == 0:
                 # if we 'picked' tomato
-                if 'objectId' in action:
-                    picked_obj = action['objectId']
-                    if picked_obj.lower() != 'tomato':
-                        # if not successful, penalize
-                        reward += STEP_PENALTY * 2
+                if not action_was_successful:
+                    all_done = True
+                    reward += STEP_PENALTY
 
             elif done_action_id == 1:
                 # if we 'cook' tomato
@@ -119,16 +121,19 @@ class Episode:
                     reward += STEP_PENALTY * 2
                 elif not action_was_successful:
                     reward += STEP_PENALTY * 200
+                    all_done = True
 
             if self.successes[done_action_id] != 1:
                 objects = self._env.last_event.metadata['objects']
                 visible_objects = [o['objectType'] for o in objects if o['visible']]
-                if 'microwave' in visible_objects:
+                if self.target in visible_objects:
                     reward += SUCCESS_REWARD
                     self.successes[done_action_id] = 1
                     self.success = all(self.successes)
 
-        all_done = all(self.done_each_action)
+                all_done = all(self.successes)
+
+        assert all_done in [True, False]
         return reward, all_done, action_was_successful
 
     def new_episode(self, args, scene):
@@ -150,13 +155,14 @@ class Episode:
             self._env.reset(scene)
 
         # For now, single target.BowlTomato
-        self.target = ['Tomato', 'Microwave']
+        self.target = 'Tomato'
+        if self.successes[0] == 1:
+            self.target = 'Microwave'
         self.success = False
         self.done_each_action = [0 for _ in self.done_each_action]
         self.successes = [0 for _ in self.successes]
         self.cur_scenecur_scene = scene
         self.actions_taken = []
         self.distances = [float('inf'), float('inf')]
-
         
         return True

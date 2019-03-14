@@ -138,6 +138,18 @@ class Environment:
                     self.teleport_agent_to(curr_state.x, curr_state.y, curr_state.z, curr_state.rotation,
                                            curr_state.horizon)
                     self.last_event.metadata['lastActionSuccess'] = False
+        elif action_dict['action'] == "PickupObject":
+            if next_state is None:
+                self.last_event.metadata['lastActionSuccess'] = False
+            else:
+                objects = self.last_event.metadata['objects']
+                events = [self.controller.step(dict(action="PickupObject", horizon=o['objectId'])) for o in objects]
+                s = any([event.metadata['lastActionSuccess'] for event in events])
+                if not s:
+                    # Go back to previous state.
+                    self.teleport_agent_to(curr_state.x, curr_state.y, curr_state.z, curr_state.rotation,
+                                           curr_state.horizon)
+                    self.last_event.metadata['lastActionSuccess'] = False
 
     def teleport_agent_to(self, x, y, z, rotation, horizon):
         """ Teleport the agent to (x,y,z) with given rotation and horizon. """
