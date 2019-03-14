@@ -156,5 +156,7 @@ class Episode:
         self.successes = [0 for _ in self.successes]
         self.cur_scenecur_scene = scene
         self.actions_taken = []
+        self.distances = [float('inf'), float('inf')]
+
         
         return True
