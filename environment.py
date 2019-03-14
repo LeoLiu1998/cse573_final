@@ -103,6 +103,17 @@ class Environment:
         return self.controller.last_event
 
     def step(self, action_dict):
+
+        def cook(obj_id):
+            event = self.controller.step(dict(action='OpenObject', objectId=obj_id))
+            s1 = event.metadata['lastActionSuccess']
+            event = self.controller.step(dict(action='PlaceHeldObject', objectId=obj_id))
+            s2 = event.metadata['lastActionSuccess']
+            event = self.controller.step(dict(action="CloseObject", objectId=obj_id))
+            s3 = event.metadata['lastActionSuccess']
+
+            return (s1, s2, s3)
+
         curr_state = ThorAgentState.get_state_from_evenet(event=self.controller.last_event, forced_y=self.y)
         next_state = get_next_state(curr_state, action_dict['action'], copy_state=True)
         if action_dict['action'] in ['LookUp', 'LookDown', 'RotateLeft', 'RotateRight', 'MoveAhead']:
@@ -126,14 +137,11 @@ class Environment:
             if next_state is None:
                 self.last_event.metadata['lastActionSuccess'] = False
             else:
-                event = self.controller.step(dict(action='OpenObject', x=next_state.x, y=next_state.y, z=next_state.z))
-                s1 = event.metadata['lastActionSuccess']
-                event = self.controller.step(dict(action='PlaceHeldObject', rotation=next_state.rotation))
-                s2 = event.metadata['lastActionSuccess']
-                event = self.controller.step(dict(action="CloseObject", horizon=next_state.horizon))
-                s3 = event.metadata['lastActionSuccess']
+                object_ids = [obj['objectId'] for obj in self.last_event.metadata['objects'] if
+                              'Microwave' in obj['objectId']]
+                results = [cook(obj_id) for obj_id in object_ids]
 
-                if not (s1 and s2 and s3):
+                if not any([all(result) for result in results]):
                     # Go back to previous state.
                     self.teleport_agent_to(curr_state.x, curr_state.y, curr_state.z, curr_state.rotation,
                                            curr_state.horizon)
@@ -142,8 +150,9 @@ class Environment:
             if next_state is None:
                 self.last_event.metadata['lastActionSuccess'] = False
             else:
-                objects = self.last_event.metadata['objects']
-                events = [self.controller.step(dict(action="PickupObject", horizon=o['objectId'])) for o in objects]
+                object_ids = [obj['objectId'] for obj in self.last_event.metadata['objects'] if
+                              'Tomato' in obj['objectId']]
+                events = [self.controller.step(dict(action="PickupObject", objectId=id)) for id in object_ids]
                 s = any([event.metadata['lastActionSuccess'] for event in events])
                 if not s:
                     # Go back to previous state.
