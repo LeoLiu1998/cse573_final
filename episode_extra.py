@@ -53,11 +53,7 @@ class Episode:
         return self.action_step(action)
 
     def action_step(self, action):
-        if action['action'] == 'PickupObject':
-            action['objec']
-            self.environment.step(action)
-        else:
-            self.environment.step(action)
+        self.environment.step(action)
         reward, terminal, action_was_successful = self.judge(action)
 
         return reward, terminal, action_was_successful
