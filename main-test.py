@@ -79,15 +79,19 @@ def main():
     args.randomize_objects = False
     end_flag.value = False
     test_res_queue = mp.Queue()
-    for rank in range(0, args.workers):
-        p = mp.Process(target=train.test, args=(
-            rank, args, create_shared_model,
-            shared_model, init_agent,
-            test_res_queue, end_flag))
-        p.start()
-        processes.append(p)
-        print('* Agent created.')
-        time.sleep(0.1)
+
+    if args.workers == 0:
+        train.test(0, args, create_shared_model, shared_model, init_agent, test_res_queue, end_flag)
+    else:
+        for rank in range(0, args.workers):
+            p = mp.Process(target=train.test, args=(
+                rank, args, create_shared_model,
+                shared_model, init_agent,
+                test_res_queue, end_flag))
+            p.start()
+            processes.append(p)
+            print('* Agent created.')
+            time.sleep(0.1)
 
     test_total_ep = 0
     n_frames = 0

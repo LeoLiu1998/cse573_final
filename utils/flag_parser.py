@@ -229,5 +229,10 @@ def parse_arguments():
         action='store_true',
         default=False,
         help='whether or not to resume from ./model/last_model')
-
+    parser.add_argument(
+        '--replay',
+        action='store_true',
+        default=False,
+        help='whether to slow replay'
+    )
     return parser.parse_args()

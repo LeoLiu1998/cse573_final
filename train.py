@@ -46,6 +46,11 @@ def train(rank, args, create_shared_model, shared_model,
                 if player.done:
                     break
 
+            # slow_replay
+            if args.replay:
+                player.episode.new_episode(args, scene, change_seed=False)
+                player.episode.slow_replay(delay=0.2)
+
             # Compute the loss.
             policy_loss, value_loss = a3c_loss(args, player, gpu_id)
             total_loss = policy_loss + 0.5 * value_loss  

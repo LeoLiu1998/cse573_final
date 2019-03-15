@@ -131,8 +131,6 @@ class Environment:
                     # Go back to previous state.
                     self.teleport_agent_to(curr_state.x, curr_state.y, curr_state.z, curr_state.rotation, curr_state.horizon)
                     self.last_event.metadata['lastActionSuccess'] = False
-        elif action_dict['action'].startswith('Done'):
-            return self.controller.step(action_dict)
         elif action_dict['action'] == "Cook":
             if next_state is None:
                 self.last_event.metadata['lastActionSuccess'] = False
@@ -159,6 +157,8 @@ class Environment:
                     self.teleport_agent_to(curr_state.x, curr_state.y, curr_state.z, curr_state.rotation,
                                            curr_state.horizon)
                     self.last_event.metadata['lastActionSuccess'] = False
+        elif not action_dict['action'].startswith('Done'):
+            return self.controller.step(action_dict)
 
     def teleport_agent_to(self, x, y, z, rotation, horizon):
         """ Teleport the agent to (x,y,z) with given rotation and horizon. """
