@@ -111,6 +111,8 @@ class Episode:
                         reward += SUCCESS_REWARD
                         self.successes[done_id] = 1
                         self.success = all(self.successes)
+                    else:
+                        reward = 2 * STEP_PENALTY
                     if self.args.bonus:
                         if self.success:
                             reward += GOAL_SUCCESS_REWARD
@@ -123,6 +125,8 @@ class Episode:
                         reward += SUCCESS_REWARD
                         self.successes[done_id] = 1
                         self.success = all(self.successes)
+                    else:
+                        reward = 2 * STEP_PENALTY
                     if self.args.bonus:
                         if self.success:
                             reward += GOAL_SUCCESS_REWARD

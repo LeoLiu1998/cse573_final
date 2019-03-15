@@ -3,13 +3,14 @@ from __future__ import division
 import json
 import logging
 import os
+import pdb
 import sys
-import termios
-import tty
 
 import numpy as np
 import torch
 
+import termios
+import tty
 
 def setup_logger(logger_name, log_file, level=logging.INFO):
     l = logging.getLogger(logger_name)
@@ -35,7 +36,7 @@ def read_config(file_path):
 
 def norm_col_init(weights, std=1.0):
     x = torch.randn(weights.size())
-    x *= std / torch.sqrt((x ** 2).sum(1, keepdim=True))
+    x *= std / torch.sqrt((x**2).sum(1, keepdim=True))
     return x
 
 
@@ -55,7 +56,6 @@ def weights_init(m):
         w_bound = np.sqrt(6. / (fan_in + fan_out))
         m.weight.data.uniform_(-w_bound, w_bound)
         m.bias.data.fill_(0)
-
 
 def getch():
     fd = sys.stdin.fileno()
